@@ -1,32 +1,30 @@
+import { APIGatewayProxyResult } from 'aws-lambda';
+import { IsNotEmpty, IsOptional, Matches } from 'class-validator';
+import { MetaDataError } from 'src/exception';
 
-import { APIGatewayProxyResult } from "aws-lambda";
-import { IsOptional, Matches } from "class-validator";
+import { ClzType } from 'src/type';
+import { endpointBaseUrlRegex } from 'src/utils';
+import { HandlerProps, handlersMetaDataKey, ApiProps } from './api/base';
+import { metaDataCollection, serviceClzCollection } from './collection';
 
-import { ClzType } from "../type";
-import { HandlerProps, handlersMetaDataKey, ApiProps } from "./api/base";
-import metaDataCollection from "./collection";
-
-
-const logger = (...data: any[]) => console.debug(...["[endpoint] ", ...data]);
-
+const logger = (...data: any[]) => console.debug(...['[endpoint]', ...data]);
 
 export type ExceptionHandler = (error: any) => APIGatewayProxyResult;
 
-
 export class EndpointProps {
-
-  @Matches(/\/\w+/)
+  @Matches(endpointBaseUrlRegex)
+  @IsNotEmpty()
   baseUri!: string;
 
   exceptionHandler?: ExceptionHandler;
+
   apiProps?: Partial<ApiProps>;
 
   @IsOptional()
   authorizer?: string;
 }
 
-
-export class BaseEndpoint {
+export abstract class BaseEndpoint {
   get export_(): { [key: string]: HandlerProps } {
     return {};
   }
@@ -45,62 +43,50 @@ export class BaseEndpoint {
   }
 }
 
+function checkIfBaseEndpoint(B: ClzType<any>) {
+  if (!(B.prototype instanceof BaseEndpoint)) {
+    throw new MetaDataError(`The given endpoint class is not base of BaseEndpoint. `);
+  }
+}
+
+function fetchHandlerProps(B: ClzType<BaseEndpoint>) {
+  const props = B.prototype[handlersMetaDataKey];
+
+  if (props === undefined) {
+    throw new MetaDataError(`Can not fetch the handler properties. `);
+  }
+
+  return props;
+}
 
 function Endpoint(endpointProps: EndpointProps) {
-
   return function <T extends ClzType<BaseEndpoint>>(Base: T) {
-
-    if (!(Base.prototype instanceof BaseEndpoint)) {
-      throw new Error(`The given endpoint class is not base of BaseEndpoint. `);
-    }
+    checkIfBaseEndpoint(Base);
 
     const { baseUri, apiProps } = endpointProps;
-
+    const _endpointId = metaDataCollection.size;
     logger(`scan the settings of the endpoint [${baseUri}], props: `, JSON.stringify(endpointProps));
-    // console.debug(`precheck the settings of the endpoint ${endpointName}, ${baseUri}`);
 
-    // if (!baseUri.startsWith('/')) {
-    //   throw new Error(`The baseUri ${baseUri} of endpoint ${endpointName} is invalid, it should start with '/'`);
-    // }
-
-    // if (baseUri.endsWith('/')) {
-    //   throw new Error(`The baseUri ${baseUri} of endpoint ${endpointName} is invalid, it shouldn' end with '/'`);
-    // }
-
-    return class extends Base implements BaseEndpoint {
-
-      readonly _endpointId: number;
-      readonly _handlersProps: Map<string, HandlerProps>;
-      readonly _endpointProps: EndpointProps;
+    const Clz = class extends Base implements BaseEndpoint {
+      private readonly _endpointId: number;
+      private readonly _handlersProps: Map<string, HandlerProps>;
+      private readonly _endpointProps: EndpointProps;
 
       constructor(...args: any[]) {
         super(...args);
 
-        this._handlersProps = Base.prototype[handlersMetaDataKey];
-
-        if (this._handlersProps === undefined) {
-          throw new Error(`Can not get the property with symbol ${handlersMetaDataKey.toString()}`)
-        }
-
+        this._endpointId = _endpointId;
         this._endpointProps = endpointProps;
-
-        // console.debug(`Starting to process the handlers in endpoint: [${endpointName}]`);
-
-        // // check if validity of the endpoint setting
-        // handlers.forEach(({ apiProps: { path } }, k) => {
-        //   console.debug(`Found a handler: [${k}] in endpoint ${endpointName}`);
-        // });
+        this._handlersProps = fetchHandlerProps(Base);
 
         // inherit config from endpoint
         for (let [_, props] of this._handlersProps.entries()) {
           props.apiProps = Object.assign(props.apiProps, apiProps ?? {});
         }
 
-        this._endpointId = metaDataCollection.size;
-
         metaDataCollection.set(this._endpointId, {
           endpointProps,
-          handlersProps: this._handlersProps,
+          handlersProps: this._handlersProps
         });
       }
 
@@ -116,8 +102,10 @@ function Endpoint(endpointProps: EndpointProps) {
         return this._endpointId;
       }
     };
-  }
-}
 
+    serviceClzCollection.set(_endpointId, Clz);
+    return Clz;
+  };
+}
 
 export default Endpoint;

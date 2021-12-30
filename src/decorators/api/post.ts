@@ -1,17 +1,12 @@
-import Api, { ApiProps } from "./base";
+import Api, { ApiProps } from './base';
 
-
-interface Props extends Omit<ApiProps,　"httpMethod"> {
-  
-}
-
+interface Props extends Omit<ApiProps, 'httpMethod'> {}
 
 function Post(props: Props) {
   return Api({
     ...props,
-    httpMethod: "post",
+    httpMethod: 'post'
   });
 }
-
 
 export default Post;

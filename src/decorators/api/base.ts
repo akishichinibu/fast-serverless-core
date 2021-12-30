@@ -1,22 +1,10 @@
-import { Nullable } from "src/type";
-import { ClzerType } from "src/decorators/params";
-import { IsEnum, IsOptional, Matches, ValidateNested } from "class-validator";
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, Matches, ValidateNested } from 'class-validator';
 
+import { Nullable, ClzerType } from 'src/type';
+import { HttpMethod, HttpMethodEnum } from 'src/http';
+import { endpointBaseUrlRegex } from 'src/utils';
 
-export const handlersMetaDataKey = Symbol("handlers");
-
-
-enum HttpMethod {
-  GET = "get",
-  POST = "post",
-  PUT = "put",
-  PATCH = "patch",
-  DELETE = "delete",
-}
-
-
-type Method = "get" | "post" | "put" | "patch" | "delete";
-
+export const handlersMetaDataKey = Symbol('handlers');
 
 export interface ValidationProps {
   path: Nullable<ClzerType>;
@@ -24,22 +12,21 @@ export interface ValidationProps {
   request: Nullable<ClzerType>;
 }
 
-
 export class ApiProps {
-
+  @IsNumber()
   @IsOptional()
   version?: number;
 
-  @Matches(/^(\/)\w+/)
+  @Matches(endpointBaseUrlRegex)
+  @IsNotEmpty()
   path!: string;
 
-
-  @IsEnum(HttpMethod)
+  @IsEnum(HttpMethodEnum)
+  @IsNotEmpty()
   httpMethod!: HttpMethod;
 
   response?: ClzerType;
 }
-
 
 export class HandlerProps {
   methodName!: string;
@@ -52,7 +39,6 @@ export class HandlerProps {
 
   arguments_!: Array<keyof ValidationProps>;
 }
-
 
 function Api(props: ApiProps) {
   return function (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
@@ -68,7 +54,7 @@ function Api(props: ApiProps) {
     const arguments_: Array<keyof ValidationProps> = [];
     const validationEntries = [];
 
-    for (let k of ["path", "query", "request"]) {
+    for (let k of ['path', 'query', 'request']) {
       const r = Reflect.getMetadata(propertyKey, target, k);
 
       if (r === undefined) {
@@ -85,12 +71,11 @@ function Api(props: ApiProps) {
       methodDescriptor: descriptor,
       apiProps: props,
       validation: Object.fromEntries(validationEntries) as any,
-      arguments_,
-    }
+      arguments_
+    };
 
     handlers.set(p, handlerProps);
   };
 }
-
 
 export default Api;

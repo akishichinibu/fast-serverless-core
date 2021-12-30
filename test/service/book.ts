@@ -1,24 +1,24 @@
-import { awsExport } from "src/adapter/aws";
-import * as a from "src/decorators";
+import { IsNotEmpty, Min } from "class-validator";
+import * as f from "src";
 
 
 class PathParameter {
+
+  @Min(0)
+  @IsNotEmpty()
   id!: number;
 }
 
 
-a.Endpoint({
+@f.Endpoint({
   baseUri: "/books",
 })
-class BookService extends a.BaseEndpoint {
+class BookService extends f.BaseEndpoint {
 
-  @a.Get({
+  @f.Get({
     path: "",
   })
-  async get(@a.Path(() => PathParameter) { id }: PathParameter) {
-    return [1, 2, 3];
+  async get(@f.Path(() => PathParameter) { id }: PathParameter) {
+    return [1, 2, 3, id];
   }
 }
-
-
-export default awsExport(BookService);
