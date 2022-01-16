@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { EndpointModule } from './decorators';
+import { ClzType } from './type';
 
 const JSON_RESPONSE_CONTENT_TYPE = 'application/json';
 const endpointFileSubffix = '.ts';
@@ -30,16 +30,17 @@ export async function* scanFiles(basePath: string) {
   }
 }
 
-export async function importModule(modulePath: string) {
+export function printMeta(target: any, propertyKey?: string) {
+  const keys = (propertyKey ? Reflect.getMetadataKeys(target, propertyKey) : Reflect.getMetadataKeys(target)) ?? [];
+  console.log(keys);
+  for (const key of keys) {
+    console.log(`${key}: ${propertyKey ? Reflect.getMetadata(key, target, propertyKey) : Reflect.getMetadata(key, target)}`);
+  }
+  console.log('#########################');
+}
+
+export async function importAsController(modulePath: string) {
   const module = await import(modulePath);
-  const m = 'default' in module ? module['default'] : module;
-  console.log('@@@3', m);
-  // const instance = m["_"];
-
-  // if (instance === undefined) {
-  //   console.warn(`Imported from ${modulePath}, but it doesn't contain an endpoint export, skipped. `);
-  //   return null;
-  // }
-
-  return m as EndpointModule;
+  const Controller = module['default'] as ClzType<any>;
+  return Controller;
 }

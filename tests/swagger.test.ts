@@ -1,16 +1,16 @@
 import { writeFile } from "fs";
 import * as path from "path";
-import { importModule, scanFiles } from "src/scan";
-import { generateSwagger } from "src/swagger";
 import { promisify } from "util";
 
+import { importAsController, scanFiles } from "src/scan";
+import { generateSwagger } from "src/swagger";
 
 const test = async () => {
   const modules = [];
 
   for await (const { path: p } of scanFiles(path.join(__dirname, "service"))) {
     console.log(p);
-    const module = await importModule(p);
+    const module = await importAsController(p);
     module !== null && modules.push(module);
   }
 

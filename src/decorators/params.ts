@@ -1,28 +1,16 @@
-import 'reflect-metadata';
-import { ClzerType } from 'src/type';
+import * as c from 'src/constants';
+import { defineMetadatas } from 'src/metadata';
 
-function builder(metaKey: symbol | string) {
-  return function (clzer: ClzerType) {
+function createParamsDecorator(parameterType: symbol | string) {
+  return function () {
     return function (target: Object, propertyKey: string | symbol, parameterIndex: number) {
-      if (Reflect.getMetadata(propertyKey, target, metaKey)) {
-        throw new Error(`The ${metaKey.toString()} at index ${parameterIndex} has already existed in ${propertyKey.toString()}. `);
-      }
-
-      Reflect.defineMetadata(
-        propertyKey,
-        {
-          clzer,
-          index: parameterIndex
-        },
-        target,
-        metaKey
-      );
+      defineMetadatas(target, propertyKey)({ [`${c.HANDLER_PARAMS_METADATA_PREFIX}:${parameterIndex}`]: parameterType });
     };
   };
 }
 
-export const Path = builder('path');
+export const Path = createParamsDecorator(c.HandlerParamsEnum.Path);
 
-export const Query = builder('query');
+export const Query = createParamsDecorator(c.HandlerParamsEnum.Query);
 
-export const Body = builder('body');
+export const Body = createParamsDecorator(c.HandlerParamsEnum.Body);

@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "packages": {
+    "fast-restful": {
+      "version": "1.0.0",
+      "signature": "c0fb6860fcf60046243ecf5d8ea2f0b7",
+      "file": true
+    },
+    "fast-serverless-restful": {
+      "version": "1.0.0",
+      "signature": "352ebd83330157d86cf21f75aaa86945",
+      "file": true
+    }
+  }
+}
