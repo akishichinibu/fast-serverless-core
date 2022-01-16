@@ -86,3 +86,8 @@ export function getRequestHandlerParameters<TEndpoint extends ClzType<any>>(Endp
 export function getMethodParamTypes(Target: ClzType<any>, methodName: string) {
   return Reflect.getMetadata('design:paramtypes', Target.prototype, methodName);
 }
+
+
+export function getMethodAsyncReturnTypes(Target: ClzType<any>, methodName: string) {
+  return Reflect.getMetadata('design:asyncreturntype', Target.prototype, methodName) ?? undefined;
+}

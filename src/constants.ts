@@ -20,3 +20,5 @@ export enum HttpMethodEnum {
 }
 
 export { StatusCodes as HttpStatusCodes } from 'http-status-codes';
+
+export const ENDPOINT_FILE_EXT = '.controller.ts';

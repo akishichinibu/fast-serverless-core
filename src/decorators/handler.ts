@@ -22,7 +22,7 @@ export class HandlerProps {
 }
 
 function Handler(props: HandlerProps) {
-  return function (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
+  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     defineMetadatas(descriptor.value)({
       [HANDLER_MARK]: true,
       path: props.path,
@@ -32,10 +32,10 @@ function Handler(props: HandlerProps) {
   };
 }
 
-function createHttpMethodHandler(method: HttpMethod) {
-  interface Props extends Omit<HandlerProps, 'httpMethod'> {}
+interface Props extends Omit<HandlerProps, 'httpMethod'> { }
 
-  return function (props: Props) {
+function createHttpMethodHandler(method: HttpMethod) {
+  return (props: Props) => {
     return Handler({
       ...props,
       httpMethod: method

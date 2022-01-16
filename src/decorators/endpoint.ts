@@ -20,7 +20,7 @@ export class EndpointProps {
 }
 
 export function Endpoint(endpointProps: EndpointProps) {
-  return function <T>(Base: ClzType<T>) {
+  return function<T>(Base: ClzType<T>) {
     defineMetadatas(Base)({
       [ENDPOINT_MARK]: true,
       path: endpointProps.path,

@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { APIGatewayProxyResult, APIGatewayProxyEvent } from 'aws-lambda';
 import { HttpException, ValidationException } from 'src/exception';
 import { HttpStatusCodes } from 'src/constants';

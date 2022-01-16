@@ -1,9 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { ClzType } from './type';
+import { ENDPOINT_FILE_EXT } from 'src/constants';
 
-const JSON_RESPONSE_CONTENT_TYPE = 'application/json';
-const endpointFileSubffix = '.ts';
 
 async function* walk(dir: string): AsyncGenerator<string> {
   const currentDir = await fs.promises.opendir(dir);
@@ -11,7 +9,7 @@ async function* walk(dir: string): AsyncGenerator<string> {
     const entry = path.join(dir, p.name);
     if (p.isDirectory()) {
       yield* walk(entry);
-    } else if (p.isFile() && p.name.endsWith(endpointFileSubffix)) {
+    } else if (p.isFile() && p.name.endsWith(ENDPOINT_FILE_EXT)) {
       yield entry;
     }
   }
@@ -20,7 +18,7 @@ async function* walk(dir: string): AsyncGenerator<string> {
 export async function* scanFiles(basePath: string) {
   for await (const p of walk(basePath)) {
     const relativePath = path.relative(basePath, p);
-    const filename = path.basename(p, endpointFileSubffix);
+    const filename = path.basename(p, ENDPOINT_FILE_EXT);
 
     yield {
       path: p,
@@ -37,10 +35,4 @@ export function printMeta(target: any, propertyKey?: string) {
     console.log(`${key}: ${propertyKey ? Reflect.getMetadata(key, target, propertyKey) : Reflect.getMetadata(key, target)}`);
   }
   console.log('#########################');
-}
-
-export async function importAsController(modulePath: string) {
-  const module = await import(modulePath);
-  const Controller = module['default'] as ClzType<any>;
-  return Controller;
 }

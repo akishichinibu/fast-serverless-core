@@ -1,14 +1,7 @@
-import { plainToInstance } from 'class-transformer';
+import { ClassTransformOptions, plainToInstance } from 'class-transformer';
 import { ValidatorOptions, validateOrReject, ValidationError } from 'class-validator';
 import { HttpException, ValidationException } from 'src/exception';
-import {
-  getHandlerMethod,
-  getEndpointBasePath,
-  getHandlerPath,
-  getRequestHandlerParameters,
-  getRequestHandlersFromEndpoint,
-  getMethodParamTypes
-} from 'src/metadata';
+import * as m from 'src/metadata';
 import { ClzType, Nullable, RequestHandlerDescriptor } from 'src/type';
 import { profiling } from 'src/utils';
 
@@ -103,12 +96,35 @@ export abstract class AbstractHandlerAdapter<TEvent, TResponse> {
     return await this._validate(r);
   }
 
+  private async validateResponseBody(obj: any, Clz: Nullable<ClzType<any>>): Promise<KVObject> {
+    this.bothNullOrFailed(Clz, obj, 'response body');
+
+    const options: ClassTransformOptions = {
+      enableImplicitConversion: false,
+      exposeDefaultValues: true,
+      exposeUnsetFields: false,
+    };
+
+    const r = plainToInstance(Clz!, obj!, options);
+    return await this._validate(r);
+  }
+
+  private async constructSuccessResultWithValidation<TEndpoint extends ClzType<any>>(Endpoint: TEndpoint, name: string, obj: any): Promise<TResponse> {
+    const Clz = m.getMethodAsyncReturnTypes(Endpoint, name);
+
+    if (Clz !== undefined) {
+      await this.validateResponseBody(obj, Clz);
+    }
+
+    return await this.constructSuccessResult(obj);
+  }
+
   private async fullfillArguments<TEndpoint extends ClzType<any>>(Endpoint: TEndpoint, name: string, descriptor: RequestHandlerDescriptor, event: TEvent) {
-    const parameterIndexMap = getRequestHandlerParameters(Endpoint, name);
+    const parameterIndexMap = m.getRequestHandlerParameters(Endpoint, name);
     const args = [];
 
     for (let [argsType, index] of parameterIndexMap) {
-      const ParameterClz: Nullable<ClzType<any>> = getMethodParamTypes(Endpoint, name)[index]!;
+      const ParameterClz: Nullable<ClzType<any>> = m.getMethodParamTypes(Endpoint, name)[index]!;
 
       switch (argsType) {
         case 'path': {
@@ -133,7 +149,7 @@ export abstract class AbstractHandlerAdapter<TEvent, TResponse> {
     // @ts-ignore
     const Constructor: ClzType<T> = instance.constructor;
 
-    const handlers = getRequestHandlersFromEndpoint(Constructor).filter(({ name }) => name === handlerName);
+    const handlers = m.getRequestHandlersFromEndpoint(Constructor).filter(({ name }) => name === handlerName);
 
     if (handlers.length !== 1) {
       throw new Error('!');
@@ -152,15 +168,14 @@ export abstract class AbstractHandlerAdapter<TEvent, TResponse> {
 
         // logger(`The proposed arguments: `, finalArguments);
 
-        const method = getHandlerMethod(descriptor.value);
-        const baseUri = getEndpointBasePath(Constructor);
-        const path = getHandlerPath(descriptor.value);
+        const method = m.getHandlerMethod(descriptor.value);
+        const baseUri = m.getEndpointBasePath(Constructor);
+        const path = m.getHandlerPath(descriptor.value);
 
         const [cost, result] = await profiling((...args: any[]) => descriptor.value?.call(instance, ...args), args);
-
         logger(`[profile] [${method} ${baseUri}/${path}] execution costs [${cost}] ms. `);
 
-        return await this.constructSuccessResult(result);
+        return await this.constructSuccessResultWithValidation(Constructor, handlerName, result);
       } catch (error) {
         if (error instanceof HttpException) {
           return await this.constructHttpErrorResult(error);

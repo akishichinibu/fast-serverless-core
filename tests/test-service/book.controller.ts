@@ -1,6 +1,5 @@
 import { IsArray, IsNotEmpty, IsNumber, IsString, Min, ValidateNested } from "class-validator";
 import * as f from "src/decorators";
-import { BodyParameter } from "swagger-schema-official";
 
 
 class PathParameter {
@@ -32,9 +31,9 @@ class BookService {
   @f.Get({
     path: "",
   })
-  async get(@f.Path() { id }: PathParameter, @f.Query() query: QueryParameter, @f.Body() body: BodyParameter) {
+  @f.ReturnType(PathParameter)
+  async get(@f.Path() { id }: PathParameter, @f.Query() query: QueryParameter) {
     console.log(query);
-    console.log(body);
     return [1, 2, 3, id];
   }
 }
