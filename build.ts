@@ -1,16 +1,19 @@
 import * as path from "path";
-import { Generator } from "npm-dts";
 import * as esbuild from "esbuild";
 import { nodeExternalsPlugin } from "esbuild-node-externals";
+import { dtsPlugin } from "esbuild-plugin-d.ts";
 
-const outputDir = "dist";
+const outdir = "dist";
+const outbase = "src";
 
-const commonSettings: esbuild.BuildOptions = {
+esbuild.build({
   bundle: true,
-  outdir: "dist",
+  outdir,
+  outbase,
   tsconfig: 'tsconfig.json',
   platform: "node",
   metafile: false,
+  treeShaking: true,
   external: [
     "esbuild",
   ],
@@ -18,20 +21,9 @@ const commonSettings: esbuild.BuildOptions = {
     nodeExternalsPlugin({
       packagePath: 'package.json',
     }),
+    dtsPlugin(),
   ],
-}
-
-esbuild.build({
-  ...commonSettings,
   entryPoints: {
     "index": path.join("src", "index.ts"),
-    "cli": path.join("cli", "index.ts"),
   }
 });
-
-new Generator({
-  entry: path.join("src", "index.ts"),
-  output: 'dist/index.d.ts',
-  // @ts-ignore
-  logLevel: "debug",
-}, true).generate()

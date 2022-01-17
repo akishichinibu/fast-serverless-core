@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsOptional, Matches } from 'class-validator';
 import { ENDPOINT_MARK } from 'src/constants';
 
-import { defineMetadatas } from 'src/metadata';
+import { defineInternalMetadata } from 'src/metadata/utils';
 import { ClzType } from 'src/type';
 import { endpointBaseUrlRegex } from 'src/utils';
 import { HandlerProps } from './handler';
@@ -20,13 +20,12 @@ export class EndpointProps {
 }
 
 export function Endpoint(endpointProps: EndpointProps) {
-  return function<T>(Base: ClzType<T>) {
-    defineMetadatas(Base)({
+  return function <T>(Base: ClzType<T>) {
+    defineInternalMetadata(Base)({
       [ENDPOINT_MARK]: true,
       path: endpointProps.path,
       apiProps: endpointProps.apiProps ?? {}
     });
-
     return Base;
   };
 }

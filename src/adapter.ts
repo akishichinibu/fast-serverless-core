@@ -7,7 +7,7 @@ import { profiling } from 'src/utils';
 
 const logger = (...data: any[]) => console.debug(...['[adapter:aws] ', ...data]);
 
-export type KVObject = { [key: string]: any };
+type KVObject = { [key: string]: any };
 
 export abstract class AbstractHandlerAdapter<TEvent, TResponse> {
   private async _validate(obj: any, props?: ValidatorOptions) {
@@ -102,7 +102,7 @@ export abstract class AbstractHandlerAdapter<TEvent, TResponse> {
     const options: ClassTransformOptions = {
       enableImplicitConversion: false,
       exposeDefaultValues: true,
-      exposeUnsetFields: false,
+      exposeUnsetFields: false
     };
 
     const r = plainToInstance(Clz!, obj!, options);
@@ -149,7 +149,7 @@ export abstract class AbstractHandlerAdapter<TEvent, TResponse> {
     // @ts-ignore
     const Constructor: ClzType<T> = instance.constructor;
 
-    const handlers = m.getRequestHandlersFromEndpoint(Constructor).filter(({ name }) => name === handlerName);
+    const handlers = m.getRequestHandlersFromController(Constructor).filter(({ name }) => name === handlerName);
 
     if (handlers.length !== 1) {
       throw new Error('!');

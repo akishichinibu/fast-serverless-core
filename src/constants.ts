@@ -1,15 +1,17 @@
-export const ENDPOINT_MARK = '__endpoint__';
-export const HANDLER_MARK = '__handler__';
+export const FAST_METAKEY_PREFIX = 'fast';
 
-export enum HandlerParamsEnum {
+export const ENDPOINT_MARK = `__endpoint__`;
+export const HANDLER_MARK = `__handler__`;
+
+export enum HandlerParamsMetaKeyEnum {
   Path = 'path',
   Query = 'query',
   Body = 'body'
 }
 
-export type HandlerParamsType = `${HandlerParamsEnum}`;
+export type HandlerParamsMetaKeyType = `${HandlerParamsMetaKeyEnum}`;
 
-export const HANDLER_PARAMS_METADATA_PREFIX = 'args';
+export const HANDLER_PARAMS_METADATA_PREFIX = `args`;
 
 export enum HttpMethodEnum {
   GET = 'GET',

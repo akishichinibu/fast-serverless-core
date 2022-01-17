@@ -2,7 +2,7 @@ import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from 'cla
 
 import { HttpMethod } from 'src/type';
 import { endpointBaseUrlRegex } from 'src/utils';
-import { defineMetadatas } from 'src/metadata';
+import { defineInternalMetadata } from 'src/metadata/utils';
 import { HANDLER_MARK, HttpMethodEnum } from 'src/constants';
 
 export class HandlerProps {
@@ -23,7 +23,7 @@ export class HandlerProps {
 
 function Handler(props: HandlerProps) {
   return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
-    defineMetadatas(descriptor.value)({
+    defineInternalMetadata(descriptor.value)({
       [HANDLER_MARK]: true,
       path: props.path,
       method: props.httpMethod,
@@ -32,7 +32,7 @@ function Handler(props: HandlerProps) {
   };
 }
 
-interface Props extends Omit<HandlerProps, 'httpMethod'> { }
+interface Props extends Omit<HandlerProps, 'httpMethod'> {}
 
 function createHttpMethodHandler(method: HttpMethod) {
   return (props: Props) => {
